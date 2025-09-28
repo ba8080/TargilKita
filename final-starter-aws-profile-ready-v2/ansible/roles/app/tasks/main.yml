@@ -1,0 +1,49 @@
+---
+- name: Checkout app repo
+  git:
+    repo: "{{ app_repo_url }}"
+    dest: /opt/midapp
+    version: main
+
+- name: Create venv
+  command: python3 -m venv /opt/midapp/venv
+  args: { creates: /opt/midapp/venv/bin/activate }
+
+- name: Install requirements
+  command: /opt/midapp/venv/bin/pip install -r requirements.txt
+  args: { chdir: /opt/midapp }
+
+- name: Render .env
+  template:
+    src: ".env.j2"
+    dest: "/opt/midapp/.env"
+    owner: ec2-user
+    group: ec2-user
+    mode: "0644"
+
+- name: Install systemd unit
+  template:
+    src: "app.service.j2"
+    dest: "/etc/systemd/system/app.service"
+  notify: Restart app
+
+- name: Nginx site
+  template:
+    src: "nginx_site.conf.j2"
+    dest: "/etc/nginx/conf.d/midapp.conf"
+  notify: Restart nginx
+
+- name: Ensure services enabled
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - app
+    - nginx
+
+handlers:
+  - name: Restart app
+    systemd: { name: app, state: restarted, daemon_reload: yes }
+  - name: Restart nginx
+    systemd: { name: nginx, state: restarted }

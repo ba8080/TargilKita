@@ -1,0 +1,9 @@
+project_name   = "final-starter"
+region         = "us-east-1"
+vpc_cidr       = "10.0.0.0/16"
+azs            = ["us-east-1a", "us-east-1b"]
+public_cidr    = "10.0.0.0/24"
+private_cidrs  = ["10.0.10.0/24", "10.0.11.0/24"]
+instance_type  = "t3.micro"
+key_name       = "vockey"
+root_volume_gb = 16

@@ -1,0 +1,9 @@
+variable "project_name"   { type = string }
+variable "region"         { type = string }
+variable "vpc_cidr"       { type = string }
+variable "azs"            { type = list(string) }
+variable "public_cidr"    { type = string }
+variable "private_cidrs"  { type = list(string) }
+variable "instance_type"  { type = string }
+variable "key_name"       { type = string }
+variable "root_volume_gb" { type = number }

@@ -1,0 +1,8 @@
+---
+- hosts: bastion
+  become: true
+  tasks:
+    - name: Ensure base packages
+      yum:
+        name: ["python3", "git"]
+        state: present

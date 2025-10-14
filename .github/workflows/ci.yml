@@ -1,0 +1,70 @@
+name: CI — Terraform & Ansible
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform-checks:
+    name: Terraform — fmt / validate / tflint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        # action docs: https://github.com/hashicorp/setup-terraform
+        # v3 is the current major (Aug 2024+). :contentReference[oaicite:1]{index=1}
+
+      - name: Terraform fmt (check)
+        run: terraform fmt -recursive -check
+
+      - name: Terraform init (no backend)
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate -no-color
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+        with:
+          cache: true
+        # v6 is the latest major; supports plugin caching. :contentReference[oaicite:2]{index=2}
+
+      - name: TFLint init (install plugins)
+        run: |
+          tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: TFLint run
+        run: tflint -f compact
+
+  ansible-lint:
+    name: Ansible — ansible-lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ansible
+    needs: terraform-checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run ansible-lint
+        # Pin to a stable release tag if you prefer (e.g., v25.9.2)
+        uses: ansible/ansible-lint@v25.9.2
+        # Marketplace docs recommend pinning to a version. :contentReference[oaicite:3]{index=3}
